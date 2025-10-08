@@ -37,7 +37,7 @@ Both components are designed to be placed on Salesforce record pages for their r
 
 ### Architecture
 
-The solution consists of Lightning Web Components and an Apex controller:
+The solution consists of Lightning Web Components, Apex controllers, automation triggers, and data fetching classes:
 
 1.  **`genesysExperienceSummary` LWC** (for `genesysps__Experience__c`):
     * **HTML (`genesysExperienceSummary.html`)**: Defines the structure and layout of the component, including sections for interaction details and wrap-up codes.
@@ -63,18 +63,48 @@ The solution consists of Lightning Web Components and an Apex controller:
         - **`FlowInputs` inner class**: Defines the structure for the JSON payload sent to the Genesys Cloud API
         - **`WrapUpException` inner class**: Custom exception class for handling errors related to wrap-up operations
 
+4.  **Data Fetching Classes** (Reusable for both objects):
+    * **`GCGetAgentParticipantId`**: Fetches agent participant ID from Genesys Cloud Analytics API
+        - **`getAgentParticipantId` method**: An `@InvocableMethod` that triggers the async data fetch
+        - **`futureCallout` method**: Performs the HTTP GET request to `/api/v2/analytics/conversations/{id}/details`
+        - **`extractAgentParticipantId` method**: Parses the response to find the agent participant ID
+        - **`updateRecords` method**: Updates the relevant record(s) with the fetched agent participant ID
+    * **`GCFetchInteractionSummary`**: Fetches Copilot summaries and wrap-up codes from Genesys Cloud
+        - **`updateInteractionSummary` method**: An `@InvocableMethod` that triggers the async data fetch
+        - **`futureCallout` method**: Performs the HTTP GET request to `/api/v2/conversations/{id}/summaries`
+        - **`processResponse` method**: Parses and maps the response data to Salesforce fields
+        - **`updateRecord` method**: Updates the relevant record(s) with the fetched Copilot data
+
+5.  **Automation Triggers**:
+    * **`ExperienceTrigger`**: Triggers data fetching for `genesysps__Experience__c` records
+        - **After Insert**: Fetches agent participant ID when `genesysps__Interaction_Id__c` is populated
+        - **After Update**: Fetches Copilot summary when `genesysps__Completed__c` changes to true
+    * **`VoiceCallTrigger`**: Triggers data fetching for `VoiceCall` records
+        - **After Insert**: Fetches agent participant ID when `GC_Interaction_Id__c` is populated
+        - **After Update**: Fetches Copilot summary when `IsClosed` changes to true
+
 ### Key Components and Logic
 
+* **Data Population (Automated)**: Triggers automatically fetch and populate Copilot data from Genesys Cloud APIs when records are created or updated:
+    - **ExperienceTrigger**: On insert with `genesysps__Interaction_Id__c` → fetches agent participant ID; on update when `genesysps__Completed__c` = true → fetches Copilot summary
+    - **VoiceCallTrigger**: On insert with `GC_Interaction_Id__c` → fetches agent participant ID; on update when `IsClosed` = true → fetches Copilot summary
+    - **GCGetAgentParticipantId**: Makes async callout to `/api/v2/analytics/conversations/{id}/details` to extract agent participant ID
+    - **GCFetchInteractionSummary**: Makes async callout to `/api/v2/conversations/{id}/summaries` to fetch Copilot data and map to Salesforce fields
+
 * **Data Retrieval**: Both LWCs use the `@wire` service with `getRecord` to fetch data from their respective objects (`genesysps__Experience__c` or `VoiceCall`). They retrieve various fields related to Copilot summaries, confidence scores, wrap-up codes, and interaction identifiers.
+
 * **Confidence Styling**: The JavaScript controller includes a `getConfidenceColor` function that calculates an RGB color based on a confidence value (0-1). This color is then used to dynamically style the borders of the text areas displaying summaries and wrap-up codes.
+
 * **Wrap-up Code Application**:
     1.  When a user clicks on a wrap-up code box, the `handleWrapUpClick` JavaScript function is triggered.
     2.  It retrieves the `interactionId`, the selected `wrapUpCodeId`, `participantId` (specifically `GC_agent_participant_id__c`), and `communicationId` from the current record's data.
     3.  It calls the `updateWrapUpCode` Apex method.
     4.  The Apex method constructs the JSON payload and the API endpoint.
     5.  The `futureCallout` Apex method then makes an HTTP POST request to `callout:GC_Base_API/api/v2/conversations/calls/{interactionId}/participants/{participantId}/communications/{communicationId}/wrapup`.
-* **Named Credential**: The Apex callout uses a Named Credential `GC_Base_API`. This must be configured in Salesforce with the base URL for the Genesys Cloud API.
-* **Error Handling**: Both LWCs and the Apex controller include error handling. The LWCs display toast notifications for errors, and the Apex controller logs errors and throws `AuraHandledException` or custom `WrapUpException`.
+
+* **Named Credential**: The Apex callouts use a Named Credential `GC_Base_API`. This must be configured in Salesforce with the base URL for the Genesys Cloud API.
+
+* **Error Handling**: All components include comprehensive error handling. The LWCs display toast notifications for errors, and the Apex classes log errors and throw appropriate exceptions.
 
 ## Setup and Prerequisites
 
@@ -82,6 +112,12 @@ The solution consists of Lightning Web Components and an Apex controller:
     * Deploy the Apex controller classes:
         - `ExperienceCopilotController.cls` (for `genesysps__Experience__c` object)
         - `VoiceCallCopilotController.cls` (for `VoiceCall` object)
+    * Deploy the data fetching classes:
+        - `GCGetAgentParticipantId.cls` (reusable for both objects)
+        - `GCFetchInteractionSummary.cls` (reusable for both objects)
+    * Deploy the automation triggers:
+        - `ExperienceTrigger.trigger` (for `genesysps__Experience__c` object)
+        - `VoiceCallTrigger.trigger` (for `VoiceCall` object)
     * Deploy both LWC bundles:
         - `genesysExperienceSummary` (HTML, JS, CSS, XML) for the `genesysps__Experience__c` object
         - `genesysVoiceCallSummary` (HTML, JS, CSS, XML) for the `VoiceCall` object
@@ -122,10 +158,13 @@ The following fields are created for both objects:
 
 **Note**: For the `VoiceCall` object, all fields are custom fields that need to be created. For the `genesysps__Experience__c` object, some fields may already exist (like `genesysps__Interaction_Id__c`), but the GC_Copilot fields are custom fields that need to be created.
 4.  **Permissions**:
-    * Ensure users have permission to access both Apex controller classes:
+    * Ensure users have permission to access all Apex classes:
         - `ExperienceCopilotController` (for `genesysps__Experience__c` object)
         - `VoiceCallCopilotController` (for `VoiceCall` object)
+        - `GCGetAgentParticipantId` (reusable for both objects)
+        - `GCFetchInteractionSummary` (reusable for both objects)
     * Ensure users have read access to the fields on both the `genesysps__Experience__c` and `VoiceCall` objects.
+    * Ensure users have permission to execute the automation triggers.
 
 ## Deployment
 
@@ -146,15 +185,18 @@ Replace `<username>` with your Salesforce username or alias.
 
 ### Production Deployment Requirements
 
-**Important:** For production org deployment, you must create test classes for both Apex controllers:
+**Important:** For production org deployment, you must create test classes for all Apex classes:
 
 - **`ExperienceCopilotController`**: Requires test class with minimum 75% code coverage
 - **`VoiceCallCopilotController`**: Requires test class with minimum 75% code coverage
+- **`GCGetAgentParticipantId`**: Requires test class with minimum 75% code coverage
+- **`GCFetchInteractionSummary`**: Requires test class with minimum 75% code coverage
 
 **Test Class Requirements:**
-- Test the `updateWrapUpCode` method with various scenarios
+- Test the `@AuraEnabled` and `@InvocableMethod` methods with various scenarios
 - Mock HTTP callouts using `HttpCalloutMock` (since these are `@future` methods)
 - Test error handling scenarios
+- Test trigger automation logic
 - Achieve at least 75% code coverage for production deployment
 
 **Example Test Structure:**
@@ -197,6 +239,26 @@ When viewing a record, the respective component will display the Copilot summary
     * Handles the server-side logic for updating the wrap-up code via a callout to the Genesys Cloud API for `VoiceCall` records.
     * Uses `@AuraEnabled` for methods callable from the VoiceCall LWC and `@future(callout=true)` for asynchronous API calls.
 
+### Data Fetching Classes (Reusable)
+* **`GCGetAgentParticipantId.cls`**:
+    * Fetches agent participant ID from Genesys Cloud Analytics API (`/api/v2/analytics/conversations/{id}/details`)
+    * Uses `@InvocableMethod` for trigger-based invocation and `@future(callout=true)` for async processing
+    * Extracts agent participant ID from API response and updates relevant records
+* **`GCFetchInteractionSummary.cls`**:
+    * Fetches Copilot summaries and wrap-up codes from Genesys Cloud (`/api/v2/conversations/{id}/summaries`)
+    * Uses `@InvocableMethod` for trigger-based invocation and `@future(callout=true)` for async processing
+    * Parses API response and maps data to Salesforce fields for both object types
+
+### Automation Triggers
+* **`ExperienceTrigger.trigger`**:
+    * Triggers data fetching for `genesysps__Experience__c` records
+    * After Insert: Fetches agent participant ID when `genesysps__Interaction_Id__c` is populated
+    * After Update: Fetches Copilot summary when `genesysps__Completed__c` changes to true
+* **`VoiceCallTrigger.trigger`**:
+    * Triggers data fetching for `VoiceCall` records
+    * After Insert: Fetches agent participant ID when `GC_Interaction_Id__c` is populated
+    * After Update: Fetches Copilot summary when `IsClosed` changes to true
+
 ### genesysExperienceSummary Component (for genesysps__Experience__c)
 * **`genesysExperienceSummary.html`**:
     * The template file defining the LWC's structure.
@@ -237,6 +299,7 @@ When viewing a record, the respective component will display the Copilot summary
 
 ## Error Handling and Logging
 
-* **Apex**: Both `ExperienceCopilotController` and `VoiceCallCopilotController` use `try-catch` blocks to handle exceptions. Errors are logged using `System.debug` and re-thrown as `AuraHandledException` or custom `WrapUpException` to be caught by their respective LWCs.
+* **Apex**: All Apex classes (`ExperienceCopilotController`, `VoiceCallCopilotController`, `GCGetAgentParticipantId`, `GCFetchInteractionSummary`) use comprehensive `try-catch` blocks to handle exceptions. Errors are logged using `System.debug` and re-thrown as appropriate exceptions (`AuraHandledException`, `WrapUpException`, `GCAgentException`, `GCSummaryException`) to be caught by their respective callers.
 * **LWC**: Both `genesysExperienceSummary.js` and `genesysVoiceCallSummary.js` files include error handling for data loading (`wiredExperience`/`wiredVoiceCall`) and for the wrap-up update process (`handleWrapUpClick`). Errors are displayed to the user via `ShowToastEvent`.
-* **Debugging**: Console logs (`System.debug` in Apex, `console.log` and `console.error` in JS) are present throughout the code to aid in debugging. The `DEBUG_HEADER` constants help identify the source of log messages.
+* **Triggers**: Both `ExperienceTrigger` and `VoiceCallTrigger` include error handling to prevent trigger failures from affecting the overall transaction.
+* **Debugging**: Console logs (`System.debug` in Apex, `console.log` and `console.error` in JS) are present throughout the code to aid in debugging. The `DEBUG_HEADER` constants help identify the source of log messages from different components.
