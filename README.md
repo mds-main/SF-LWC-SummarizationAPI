@@ -81,13 +81,13 @@ The solution consists of Lightning Web Components, Apex controllers, automation 
         - **After Update**: Fetches Copilot summary when `genesysps__Completed__c` changes to true
     * **`VoiceCallTrigger`**: Triggers data fetching for `VoiceCall` records
         - **After Insert**: Fetches agent participant ID when `GC_Interaction_Id__c` is populated
-        - **After Update**: Fetches Copilot summary when `IsClosed` changes to true
+        - **After Update**: Fetches Copilot summary when `CallDurationInSeconds` becomes greater than 0 (indicating call completion)
 
 ### Key Components and Logic
 
 * **Data Population (Automated)**: Triggers automatically fetch and populate Copilot data from Genesys Cloud APIs when records are created or updated:
     - **ExperienceTrigger**: On insert with `genesysps__Interaction_Id__c` → fetches agent participant ID; on update when `genesysps__Completed__c` = true → fetches Copilot summary
-    - **VoiceCallTrigger**: On insert with `GC_Interaction_Id__c` → fetches agent participant ID; on update when `IsClosed` = true → fetches Copilot summary
+    - **VoiceCallTrigger**: On insert with `GC_Interaction_Id__c` → fetches agent participant ID; on update when `CallDurationInSeconds` > 0 → fetches Copilot summary
     - **GCGetAgentParticipantId**: Makes async callout to `/api/v2/analytics/conversations/{id}/details` to extract agent participant ID
     - **GCFetchInteractionSummary**: Makes async callout to `/api/v2/conversations/{id}/summaries` to fetch Copilot data and map to Salesforce fields
 
