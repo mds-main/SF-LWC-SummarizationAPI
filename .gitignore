@@ -95,8 +95,7 @@ package-lock.json
 yarn.lock
 
 # Salesforce metadata
-force-app/main/default/
-
+# Note: We track Salesforce metadata files for deployment
 # Uncomment below if you want to ignore all Salesforce metadata except specific files
 # force-app/main/default/*
 # !force-app/main/default/*.xml

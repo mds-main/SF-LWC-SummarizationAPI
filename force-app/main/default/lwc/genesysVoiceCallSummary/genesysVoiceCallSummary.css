@@ -1,0 +1,251 @@
+:host {
+    --summary-box-shadow: 0 2px 4px -2px rgba(0, 0, 0, 0.1),
+                         0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --hover-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.15),
+                   0 6px 12px -1px rgba(0, 0, 0, 0.15);
+    --input-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+    --card-animation: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.custom-card {
+    background: var(--slds-g-color-neutral-base-95, rgb(243, 243, 243));
+    border-radius: 0.25rem;
+    box-shadow: var(--summary-box-shadow);
+    transition: var(--card-animation);
+    border: 1px solid var(--slds-g-color-border-base-1, rgb(217, 219, 221));
+    position: relative;
+    overflow: hidden;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.custom-card:hover {
+    box-shadow: var(--hover-shadow);
+}
+
+.custom-icon-container {
+    background: transparent !important;
+}
+
+.custom-icon {
+    --slds-c-icon-color-background: var(--slds-g-color-brand-base-100, rgb(0, 112, 210));
+    --slds-c-icon-color-foreground: white;
+    transform: scale(1);
+    transition: transform 0.2s ease;
+    margin-left: 0 !important;
+}
+
+.custom-icon:hover {
+    transform: scale(1.05);
+}
+
+.custom-title {
+    color: var(--slds-g-color-neutral-base-10, rgb(24, 24, 24));
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.custom-summary-box {
+    background: white;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    transition: var(--card-animation);
+    border: 1px solid var(--slds-g-color-border-base-1, rgb(217, 219, 221));
+    position: relative;
+}
+
+.custom-summary-box:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--hover-shadow);
+}
+
+.custom-summary-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg,
+        var(--slds-g-color-brand-base-100, rgb(0, 112, 210)) 0%,
+        var(--slds-g-color-brand-base-70, rgb(27, 150, 255)) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 0.25rem 0.25rem 0 0;
+}
+
+.custom-summary-box:hover::before {
+    opacity: 1;
+}
+
+.custom-label {
+    color: var(--slds-g-color-neutral-base-30, rgb(68, 68, 68));
+    font-size: 0.8125rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+}
+
+.textarea-container {
+    position: relative;
+}
+
+.custom-textarea {
+    resize: none;
+    min-height: 3rem;
+    background: white;
+    border-radius: 0.25rem;
+    font-size: 0.8125rem;
+    padding: 0.75rem;
+    box-shadow: var(--input-shadow);
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.custom-textarea:hover {
+    box-shadow: var(--input-shadow), 0 0 0 1px var(--slds-g-color-brand-base-100, rgb(0, 112, 210));
+}
+
+.summary-textarea {
+    min-height: 10rem;
+    max-height: 10rem;
+    overflow-y: auto;
+}
+
+.wrap-up-grid {
+    height: 100%;
+    display: flex;
+    gap: 1rem;
+    margin: 0;
+    padding: 0 0.75rem;
+}
+
+.wrap-up-grid > div {
+    flex: 1;
+    padding: 0;
+}
+
+.wrap-up-box {
+    height: 100%;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.wrap-up-box:hover {
+    background-color: var(--slds-g-color-neutral-base-95, rgb(243, 243, 243));
+}
+
+.wrap-up-box .custom-textarea {
+    cursor: pointer;
+}
+
+.wrap-up-textarea-container {
+    flex: 1;
+    display: flex;
+}
+
+.wrap-up-textarea {
+    flex: 1;
+    height: auto !important;
+    min-height: 80px !important;
+}
+
+.wrap-up-box:hover::after {
+    content: '\f00c';
+    font-family: 'Lightning Design System Icons';
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    color: var(--slds-g-color-brand-base-100, rgb(0, 112, 210));
+    opacity: 0.7;
+    font-size: 1rem;
+}
+
+/* Custom scrollbar styling */
+.custom-textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-textarea::-webkit-scrollbar-track {
+    background: var(--slds-g-color-neutral-base-95, rgb(243, 243, 243));
+    border-radius: 4px;
+}
+
+.custom-textarea::-webkit-scrollbar-thumb {
+    background: var(--slds-g-color-brand-base-50, rgb(27, 150, 255));
+    border-radius: 4px;
+}
+
+.custom-textarea::-webkit-scrollbar-thumb:hover {
+    background: var(--slds-g-color-brand-base-100, rgb(0, 112, 210));
+}
+
+.no-padding {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.slds-card__header {
+    margin: 0;
+    padding: 0.5rem 0 0.5rem 0 !important;
+}
+
+.slds-media__figure {
+    margin: 0 0.5rem !important;
+}
+
+.slds-media {
+    margin: 0;
+    padding: 0;
+}
+
+.slds-card__header-title {
+    margin: 0;
+    padding: 0;
+}
+
+.click-indicator {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    margin-left: 0.5rem;
+}
+
+.wrap-up-box:hover .click-indicator {
+    opacity: 1;
+}
+
+.wrap-up-box.processing {
+    opacity: 0.7;
+    pointer-events: none;
+    cursor: not-allowed;
+    animation: processing-pulse 1.5s infinite;
+}
+
+@keyframes processing-pulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 0.5; }
+    100% { opacity: 0.7; }
+}
+
+@media (max-width: 768px) {
+    .wrap-up-textarea {
+        min-height: 60px !important;
+    }
+
+    .wrap-up-box:hover::after {
+        content: 'Click to apply';
+        position: absolute;
+        bottom: 0.25rem;
+        right: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--slds-g-color-brand-base-100, rgb(0, 112, 210));
+        background: rgba(255, 255, 255, 0.9);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+}

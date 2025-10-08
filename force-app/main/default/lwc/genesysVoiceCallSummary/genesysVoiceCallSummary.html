@@ -1,0 +1,157 @@
+<template>
+    <article class="slds-card slds-card_boundary custom-card">
+        <div class="slds-card__header slds-grid slds-grid_vertical-align-center slds-border_bottom no-padding">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate no-padding">
+                <div class="slds-media__figure no-padding custom-icon-container">
+                    <lightning-icon
+                        icon-name="standard:voice_call"
+                        size="medium"
+                        class="slds-icon_container custom-icon">
+                    </lightning-icon>
+                </div>
+                <div class="slds-media__body no-padding">
+                    <h2 class="slds-card__header-title no-padding">
+                        <span class="slds-text-heading_medium slds-truncate custom-title">
+                            GC Copilot Voice Call Summary
+                        </span>
+                    </h2>
+                </div>
+            </header>
+        </div>
+
+        <div class="slds-card__body">
+            <div class="slds-grid slds-gutters slds-wrap slds-p-around_medium">
+                <div class="slds-col slds-size_1-of-1 wrap-up-container">
+                    <div class="slds-grid slds-gutters wrap-up-grid">
+                        <div class="slds-col slds-size_1-of-3">
+                            <div class={getWrapUpBoxClass} onclick={handleWrapUpClick} data-index="1" title="Click to apply this wrap-up code">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label custom-label">
+                                        Primary Wrap-up Code
+                                        <lightning-icon
+                                            icon-name="utility:edit"
+                                            size="xx-small"
+                                            class="click-indicator slds-m-left_xx-small">
+                                        </lightning-icon>
+                                    </label>
+                                    <div class="textarea-container wrap-up-textarea-container">
+                                        <textarea
+                                            class="slds-textarea custom-textarea wrap-up-textarea"
+                                            readonly
+                                            style={wrapUp1Style}
+                                        >{wrapUp1}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="slds-col slds-size_1-of-3">
+                            <div class={getWrapUpBoxClass} onclick={handleWrapUpClick} data-index="2" title="Click to apply this wrap-up code">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label custom-label">
+                                        Secondary Wrap-up Code
+                                        <lightning-icon
+                                            icon-name="utility:edit"
+                                            size="xx-small"
+                                            class="click-indicator slds-m-left_xx-small">
+                                        </lightning-icon>
+                                    </label>
+                                    <div class="textarea-container wrap-up-textarea-container">
+                                        <textarea
+                                            class="slds-textarea custom-textarea wrap-up-textarea"
+                                            readonly
+                                            style={wrapUp2Style}
+                                        >{wrapUp2}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="slds-col slds-size_1-of-3">
+                            <div class={getWrapUpBoxClass} onclick={handleWrapUpClick} data-index="3" title="Click to apply this wrap-up code">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label custom-label">
+                                        Tertiary Wrap-up Code
+                                        <lightning-icon
+                                            icon-name="utility:edit"
+                                            size="xx-small"
+                                            class="click-indicator slds-m-left_xx-small">
+                                        </lightning-icon>
+                                    </label>
+                                    <div class="textarea-container wrap-up-textarea-container">
+                                        <textarea
+                                            class="slds-textarea custom-textarea wrap-up-textarea"
+                                            readonly
+                                            style={wrapUp3Style}
+                                        >{wrapUp3}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rest of existing sections (Summary, Resolution, etc.) -->
+                <div class="slds-col slds-size_1-of-1 slds-p-top_small">
+                    <div class="summary-box custom-summary-box">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label custom-label">Call Summary</label>
+                            <div class="textarea-container">
+                                <textarea
+                                    class="slds-textarea custom-textarea summary-textarea"
+                                    readonly
+                                    style={summaryStyle}
+                                >{summary}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-p-top_small">
+                    <div class="summary-box custom-summary-box">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label custom-label">Resolution</label>
+                            <div class="textarea-container">
+                                <textarea
+                                    class="slds-textarea custom-textarea"
+                                    readonly
+                                    style={resolutionStyle}
+                                >{resolution}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-p-top_small">
+                    <div class="summary-box custom-summary-box">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label custom-label">Reason</label>
+                            <div class="textarea-container">
+                                <textarea
+                                    class="slds-textarea custom-textarea"
+                                    readonly
+                                    style={reasonStyle}
+                                >{reason}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-col slds-size_1-of-1 slds-p-top_small">
+                    <div class="summary-box custom-summary-box">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label custom-label">Follow-up Actions</label>
+                            <div class="textarea-container">
+                                <textarea
+                                    class="slds-textarea custom-textarea"
+                                    readonly
+                                    style={followupStyle}
+                                >{followup}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </article>
+</template>
