@@ -142,6 +142,7 @@ The following fields are created for both objects:
 | GC Copilot Wrap-up 3 Name | `GC_Copilot_wrap_up_3_name__c` | Text | Both |
 | GC Copilot Wrap-up 3 Confidence | `GC_Copilot_wrap_up_3_confidence__c` | Number (0-1) | Both |
 | GC Copilot Wrap-up 3 ID | `GC_Copilot_wrap_up_3_id__c` | Text | Both |
+| GC Copilot Session Summary ID | `GC_Copilot_session_summary_id__c` | Text | Both |
 | GC Copilot Summary Text | `GC_Copilot_summary_text__c` | Long Text Area | Both |
 | GC Copilot Summary Confidence | `GC_Copilot_summary_confidence__c` | Number (0-1) | Both |
 | GC Copilot Resolution Text | `GC_Copilot_resolution_text__c` | Long Text Area | Both |
