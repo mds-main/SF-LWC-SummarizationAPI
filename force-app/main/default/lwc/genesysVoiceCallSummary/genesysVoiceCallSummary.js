@@ -200,7 +200,7 @@ export default class VoiceCallCopilotSummary extends LightningElement {
 
         try {
             await updateWrapUpCode({
-                interactionId: 'placeholder-interaction-id', // TODO: Update with actual field when available
+                interactionId: getFieldValue(this.voiceCall.data, 'VoiceCall.GC_Interaction_Id__c'),
                 wrapUpCodeId: wrapUpId,
                 participantId: getFieldValue(this.voiceCall.data, 'VoiceCall.GC_agent_participant_id__c'),
                 communicationId: getFieldValue(this.voiceCall.data, 'VoiceCall.GC_Copilot_communication_id__c')

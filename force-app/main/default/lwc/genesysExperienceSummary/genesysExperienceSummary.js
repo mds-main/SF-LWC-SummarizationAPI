@@ -23,8 +23,9 @@ const FIELDS = [
     'genesysps__Experience__c.GC_Copilot_reason_confidence__c',
     'genesysps__Experience__c.GC_Copilot_followup_text__c',
     'genesysps__Experience__c.GC_Copilot_followup_confidence__c',
+    'genesysps__Experience__c.genesysps__Interaction_Id__c',
     'genesysps__Experience__c.GC_Copilot_participant_id__c',
-    'genesysps__Experience__c.GC_agent_participant_id__c',
+		'genesysps__Experience__c.GC_agent_participant_id__c',
     'genesysps__Experience__c.GC_Copilot_communication_id__c'
 ];
 
@@ -199,7 +200,7 @@ export default class ExperienceCopilotSummary extends LightningElement {
 
 				try {
 						await updateWrapUpCode({
-								interactionId: 'placeholder-interaction-id', // TODO: Update with actual field when available
+								interactionId: getFieldValue(this.experience.data, 'genesysps__Experience__c.genesysps__Interaction_Id__c'),
 								wrapUpCodeId: wrapUpId,
 								participantId: getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_agent_participant_id__c'),
 								communicationId: getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_communication_id__c')
