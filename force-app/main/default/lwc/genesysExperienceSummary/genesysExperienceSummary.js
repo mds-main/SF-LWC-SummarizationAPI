@@ -51,9 +51,24 @@ export default class ExperienceCopilotSummary extends LightningElement {
             console.log(`${DEBUG_HEADER} - Wrap-up 1 ID: ${this.getWrapUpId(1)}`);
             console.log(`${DEBUG_HEADER} - Wrap-up 2 ID: ${this.getWrapUpId(2)}`);
             console.log(`${DEBUG_HEADER} - Wrap-up 3 ID: ${this.getWrapUpId(3)}`);
+
+            // Log field availability for debugging
+            const availableFields = Object.keys(data.fields || {});
+            console.log(`${DEBUG_HEADER} - Available fields:`, availableFields);
         } else if (error) {
             console.error(`${DEBUG_HEADER} - Error loading record:`, error);
-            this.showToast('Error', 'Failed to load record data', 'error');
+
+            // Provide more specific error messages
+            let errorMessage = 'Failed to load record data';
+            if (error.body && error.body.message) {
+                if (error.body.message.includes('INVALID_FIELD')) {
+                    errorMessage = 'Some fields are not available. Please check field permissions and ensure all required fields exist.';
+                } else {
+                    errorMessage = error.body.message;
+                }
+            }
+
+            this.showToast('Error', errorMessage, 'error');
         }
     }
 
@@ -69,36 +84,43 @@ export default class ExperienceCopilotSummary extends LightningElement {
     }
 
     get wrapUp1() {
-        return getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_wrap_up_1_name__c') || '';
+        const value = getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_wrap_up_1_name__c');
+        return value || 'No wrap-up code available';
     }
 
     get wrapUp2() {
-        return getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_wrap_up_2_name__c') || '';
+        const value = getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_wrap_up_2_name__c');
+        return value || 'No wrap-up code available';
     }
 
     get wrapUp3() {
-        return getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_wrap_up_3_name__c') || '';
+        const value = getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_wrap_up_3_name__c');
+        return value || 'No wrap-up code available';
     }
 
     get summary() {
-        return getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_summary_text__c') || '';
+        const value = getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_summary_text__c');
+        return value || 'No summary available';
     }
 
     get resolution() {
-        return getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_resolution_text__c') || '';
+        const value = getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_resolution_text__c');
+        return value || 'No resolution available';
     }
 
     get reason() {
-        return getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_reason_text__c') || '';
+        const value = getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_reason_text__c');
+        return value || 'No reason available';
     }
 
     get followup() {
-        return getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_followup_text__c') || '';
+        const value = getFieldValue(this.experience.data, 'genesysps__Experience__c.GC_Copilot_followup_text__c');
+        return value || 'No follow-up actions available';
     }
 
     getConfidenceColor(confidence) {
         console.log(`${DEBUG_HEADER} - Calculating confidence color for value: ${confidence}`);
-        if (!confidence) return '#e5e5e5';
+        if (confidence === null || confidence === undefined || confidence === '') return '#e5e5e5';
 
         const confidenceValue = confidence * 100;
 
