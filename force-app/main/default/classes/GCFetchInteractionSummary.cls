@@ -1,7 +1,7 @@
 public with sharing class GCFetchInteractionSummary {
     private static final String DEBUG_HEADER = '*** GCFetchInteractionSummary *** ';
     private static final Integer MAX_RETRIES = 3;
-    private static final Integer DEFAULT_WAIT_TIME = 2;
+    private static final Integer DEFAULT_WAIT_TIME = 1;
 
     public class FlowInputs {
         @InvocableVariable(label='Interaction ID' description='The Genesys Cloud interaction ID' required=true)
@@ -72,6 +72,15 @@ public with sharing class GCFetchInteractionSummary {
             Boolean success = false;
             Integer retryCount = 0;
 
+            // Initial wait before first attempt
+            if (input.waitTime != null && input.waitTime > 0) {
+                Datetime initialWaitStart = System.now();
+                Datetime initialWaitEnd = initialWaitStart.addSeconds(input.waitTime);
+                System.debug(DEBUG_HEADER + 'Initial wait of ' + input.waitTime + ' seconds before first API call');
+                while (System.now() < initialWaitEnd) {
+                }
+            }
+
             while (!success && retryCount < MAX_RETRIES) {
                 System.debug(DEBUG_HEADER + 'Starting attempt ' + (retryCount + 1) + ' of ' + MAX_RETRIES);
 
@@ -134,10 +143,16 @@ public with sharing class GCFetchInteractionSummary {
             List<Object> sessionSummaries = (List<Object>)responseMap.get('sessionSummaries');
 
             if (sessionSummaries != null && !sessionSummaries.isEmpty()) {
-                Map<String, Object> summary = (Map<String, Object>)sessionSummaries[0];
-                String status = (String)summary.get('status');
-                System.debug(DEBUG_HEADER + 'Summary status: ' + status);
-                return status == 'Completed';
+                for (Integer i = sessionSummaries.size() - 1; i >= 0; i--) {
+                    Map<String, Object> summary = (Map<String, Object>)sessionSummaries[i];
+                    String text = (String)summary.get('text');
+                    List<Object> participants = (List<Object>)summary.get('participants');
+                    String status = (String)summary.get('status');
+                    if (String.isNotBlank(text) && participants != null && !participants.isEmpty() && status == 'Completed') {
+                        System.debug(DEBUG_HEADER + 'Detected completed summary with participants at index ' + i);
+                        return true;
+                    }
+                }
             }
 
             System.debug(DEBUG_HEADER + 'No session summaries found');
@@ -186,19 +201,20 @@ public with sharing class GCFetchInteractionSummary {
                 throw new GCSummaryException('No session summaries found in response');
             }
 
-            // Find the last non-empty session summary
+            // Find the last non-empty session summary with participants
             Map<String, Object> summary = null;
             for (Integer i = sessionSummaries.size() - 1; i >= 0; i--) {
                 Map<String, Object> currentSummary = (Map<String, Object>)sessionSummaries[i];
                 String text = (String)currentSummary.get('text');
-                if (String.isNotBlank(text)) {
+                List<Object> participantsCheck = (List<Object>)currentSummary.get('participants');
+                if (String.isNotBlank(text) && participantsCheck != null && !participantsCheck.isEmpty()) {
                     summary = currentSummary;
                     break;
                 }
             }
 
             if (summary == null) {
-                throw new GCSummaryException('No non-empty session summaries found in response');
+                throw new GCSummaryException('No non-empty session summaries with participants found in response');
             }
             Map<String, Object> fieldValues = new Map<String, Object>();
 

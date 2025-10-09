@@ -16,7 +16,7 @@ trigger ExperienceTrigger on genesysps__Experience__c (after insert, after updat
                     GCFetchInteractionSummary.FlowInputs input = new GCFetchInteractionSummary.FlowInputs();
                     input.interactionId = exp.genesysps__Interaction_Id__c;
                     input.experienceId = exp.Id;
-                    input.waitTime = 3;
+                    input.waitTime = 1;
                     summaryInputs.add(input);
                 }
             }

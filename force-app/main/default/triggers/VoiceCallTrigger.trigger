@@ -26,7 +26,7 @@ trigger VoiceCallTrigger on VoiceCall (after insert, after update) {
                     GCFetchInteractionSummary.FlowInputs input = new GCFetchInteractionSummary.FlowInputs();
                     input.interactionId = (String)vc.get('GC_Interaction_Id__c');
                     input.voiceCallId = vc.Id;
-                    input.waitTime = 3;
+                    input.waitTime = 1;
                     summaryInputs.add(input);
                 }
             }
