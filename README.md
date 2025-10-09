@@ -69,11 +69,12 @@ The solution consists of Lightning Web Components, Apex controllers, automation 
         - **`futureCallout` method**: Performs the HTTP GET request to `/api/v2/analytics/conversations/{id}/details`
         - **`extractAgentParticipantId` method**: Parses the response to find the agent participant ID
         - **`updateRecords` method**: Updates the relevant record(s) with the fetched agent participant ID
-    * **`GCFetchInteractionSummary`**: Fetches Copilot summaries and wrap-up codes from Genesys Cloud
+    * **`GCFetchInteractionSummary`**: Fetches Copilot summaries and wrap-up codes from Genesys Cloud with intelligent timing and validation
         - **`updateInteractionSummary` method**: An `@InvocableMethod` that triggers the async data fetch
-        - **`futureCallout` method**: Performs the HTTP GET request to `/api/v2/conversations/{id}/summaries`
-        - **`processResponse` method**: Parses and maps the response data to Salesforce fields
+        - **`futureCallout` method**: Performs the HTTP GET request to `/api/v2/conversations/{id}/summaries` with retry logic and timing delays
+        - **`processResponse` method**: Parses and maps the response data to Salesforce fields, ensuring only complete session summaries with participants are accepted
         - **`updateRecord` method**: Updates the relevant record(s) with the fetched Copilot data
+        - **Intelligent Retry Logic**: Implements 1-second initial delay, 1-second inter-retry delays, and validates session summaries have participants before accepting
 
 5.  **Automation Triggers**:
     * **`ExperienceTrigger`**: Triggers data fetching for `genesysps__Experience__c` records
@@ -89,7 +90,13 @@ The solution consists of Lightning Web Components, Apex controllers, automation 
     - **ExperienceTrigger**: On insert with `genesysps__Interaction_Id__c` and blank `GC_agent_participant_id__c` → fetches agent participant ID; on update when `genesysps__Ended__c` transitions from null to populated, with valid interaction ID and no existing Copilot summary → fetches Copilot summary
     - **VoiceCallTrigger**: On insert with `GC_Interaction_Id__c` and blank `GC_agent_participant_id__c` → fetches agent participant ID; on update when `CallDurationInSeconds` transitions from null/0 to > 0, with valid interaction ID and no existing Copilot summary → fetches Copilot summary
     - **GCGetAgentParticipantId**: Makes async callout to `/api/v2/analytics/conversations/{id}/details` to extract agent participant ID
-    - **GCFetchInteractionSummary**: Makes async callout to `/api/v2/conversations/{id}/summaries` to fetch Copilot data and map to Salesforce fields
+    - **GCFetchInteractionSummary**: Makes async callout to `/api/v2/conversations/{id}/summaries` to fetch Copilot data and map to Salesforce fields with intelligent retry logic and timing
+
+* **Intelligent Retry & Timing Logic**: The `GCFetchInteractionSummary` class implements sophisticated retry logic to ensure complete data retrieval:
+    - **Initial Delay**: 1-second wait before the first API call to allow Genesys Cloud time to fully populate session summaries
+    - **Inter-Retry Delay**: 1-second wait between retry attempts (up to 3 total attempts)
+    - **Participants Validation**: Only accepts session summaries that include a non-empty `participants` array, ensuring we get the complete, latest interaction data
+    - **Last Non-Empty Selection**: Always selects the last (most recent) non-empty session summary with participants, not the first one
 
 * **Data Retrieval**: Both LWCs use the `@wire` service with `getRecord` to fetch data from their respective objects (`genesysps__Experience__c` or `VoiceCall`). They retrieve various fields related to Copilot summaries, confidence scores, wrap-up codes, and interaction identifiers.
 
