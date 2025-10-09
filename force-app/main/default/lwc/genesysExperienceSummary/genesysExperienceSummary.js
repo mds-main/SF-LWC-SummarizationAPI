@@ -1,5 +1,7 @@
 import { LightningElement, api, wire } from 'lwc';
-import { getRecord, getFieldValue, updateRecord, refreshApex } from 'lightning/uiRecordApi';
+import { getRecord, getFieldValue, updateRecord } from 'lightning/uiRecordApi';
+import { refreshApex } from '@salesforce/apex';
+import { subscribe, unsubscribe, onError } from 'lightning/empApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import updateWrapUpCode from '@salesforce/apex/ExperienceCopilotController.updateWrapUpCode';
 
@@ -38,70 +40,99 @@ export default class ExperienceCopilotSummary extends LightningElement {
     editedSummary = '';
     isEditingSummary = false;
 
-    // Store wire reference for manual refresh
-    wiredExperienceResult;
+    // CDC subscription
+    subscription = null;
+    channelName = '/data/genesysps__Experience__ChangeEvent';
+    relevantFields = new Set([
+        'GC_Copilot_session_summary_id__c',
+        'GC_Copilot_summary_text__c',
+        'GC_Copilot_summary_confidence__c',
+        'GC_Copilot_resolution_text__c',
+        'GC_Copilot_resolution_confidence__c',
+        'GC_Copilot_reason_text__c',
+        'GC_Copilot_reason_confidence__c',
+        'GC_Copilot_followup_text__c',
+        'GC_Copilot_followup_confidence__c',
+        'GC_Copilot_wrap_up_1_name__c',
+        'GC_Copilot_wrap_up_1_confidence__c',
+        'GC_Copilot_wrap_up_1_id__c',
+        'GC_Copilot_wrap_up_2_name__c',
+        'GC_Copilot_wrap_up_2_confidence__c',
+        'GC_Copilot_wrap_up_2_id__c',
+        'GC_Copilot_wrap_up_3_name__c',
+        'GC_Copilot_wrap_up_3_confidence__c',
+        'GC_Copilot_wrap_up_3_id__c'
+    ]);
 
     @wire(getRecord, { recordId: '$recordId', fields: FIELDS })
-    wiredExperience(result) {
-        this.wiredExperienceResult = result;
-        if (result.data) {
-            console.log(`${DEBUG_HEADER} - Record loaded successfully: ${this.recordId}`);
-            console.log(`${DEBUG_HEADER} - Wrap-up 1 ID: ${this.getWrapUpId(1)}`);
-            console.log(`${DEBUG_HEADER} - Wrap-up 2 ID: ${this.getWrapUpId(2)}`);
-            console.log(`${DEBUG_HEADER} - Wrap-up 3 ID: ${this.getWrapUpId(3)}`);
-        } else if (result.error) {
-            console.error(`${DEBUG_HEADER} - Error loading record:`, result.error);
-            this.showToast('Error', 'Failed to load record data', 'error');
-        }
-    }
+    experience;
 
     get getWrapUpBoxClass() {
         return `summary-box custom-summary-box wrap-up-box ${this.isProcessing ? 'processing' : ''}`;
-    }
-
-    // Method to manually refresh the wired data
-    async refreshData() {
-        console.log(`${DEBUG_HEADER} - Refreshing data for record: ${this.recordId}`);
-        try {
-            await refreshApex(this.wiredExperienceResult);
-            console.log(`${DEBUG_HEADER} - Data refresh completed`);
-        } catch (error) {
-            console.error(`${DEBUG_HEADER} - Error refreshing data:`, error);
-        }
     }
 
     connectedCallback() {
         console.log(`${DEBUG_HEADER} - Component initialized with recordId: ${this.recordId}`);
         // Initialize scrollbar visibility after component renders
         setTimeout(() => this.updateScrollbarVisibility(), 100);
-
-        // Set up periodic refresh to check for new data from async operations
-        this.startPeriodicRefresh();
-    }
-
-    // Start periodic refresh to catch async updates
-    startPeriodicRefresh() {
-        // Refresh after initial delay to catch async operations
-        setTimeout(() => {
-            this.refreshData();
-        }, 5000); // 5 seconds should be enough for async operations to complete
-
-        // Set up recurring refresh every 10 seconds to catch any missed updates
-        this.periodicRefreshInterval = setInterval(() => {
-            this.refreshData();
-        }, 10000);
-    }
-
-    disconnectedCallback() {
-        // Clean up interval when component is destroyed
-        if (this.periodicRefreshInterval) {
-            clearInterval(this.periodicRefreshInterval);
-        }
+        this.subscribeToCdc();
+        onError(error => {
+            console.error(`${DEBUG_HEADER} - empApi error`, JSON.stringify(error));
+        });
     }
 
     renderedCallback() {
         // Update scrollbar visibility when component re-renders
         this.updateScrollbarVisibility();
+    }
+
+    disconnectedCallback() {
+        this.unsubscribeFromCdc();
+    }
+
+    subscribeToCdc() {
+        if (this.subscription) {
+            return;
+        }
+        subscribe(this.channelName, -1, message => this.handleCdcMessage(message))
+            .then(response => {
+                this.subscription = response;
+                console.log(`${DEBUG_HEADER} - Subscribed to ${this.channelName}`);
+            })
+            .catch(err => console.error(`${DEBUG_HEADER} - Subscribe failed`, err));
+    }
+
+    unsubscribeFromCdc() {
+        if (!this.subscription) {
+            return;
+        }
+        unsubscribe(this.subscription, () => {
+            console.log(`${DEBUG_HEADER} - Unsubscribed from ${this.channelName}`);
+            this.subscription = null;
+        });
+    }
+
+    handleCdcMessage(message) {
+        try {
+            const header = message?.data?.changeEventHeader;
+            if (!header) {
+                return;
+            }
+            const recordIds = header.recordIds || [];
+            if (!recordIds.includes(this.recordId)) {
+                return;
+            }
+            const changedFields = header.changedFields || [];
+            const relevant = changedFields.length === 0 || changedFields.some(f => this.relevantFields.has(f));
+            if (relevant) {
+                console.log(`${DEBUG_HEADER} - Relevant CDC event received. Refreshing record.`);
+                refreshApex(this.experience);
+                // re-evaluate scrolls after refresh
+                setTimeout(() => this.updateScrollbarVisibility(), 200);
+            }
+        } catch (e) {
+            console.error(`${DEBUG_HEADER} - Error handling CDC message`, e);
+        }
     }
 
     updateScrollbarVisibility() {

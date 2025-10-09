@@ -100,8 +100,12 @@ The solution consists of Lightning Web Components, Apex controllers, automation 
     - **Last Non-Empty Selection**: Always selects the last (most recent) non-empty session summary with participants, not the first one
 
 * **Data Retrieval**: Both LWCs use the `@wire` service with `getRecord` to fetch data from their respective objects (`genesysps__Experience__c` or `VoiceCall`). They retrieve various fields related to Copilot summaries, confidence scores, wrap-up codes, and interaction identifiers.
-    - **Auto-Refresh**: LWCs automatically refresh data periodically to catch updates from async Genesys Cloud API operations, ensuring users see the latest data without manual page refreshes
-    - **Manual Refresh**: Includes `refreshApex` capability for immediate data updates when needed
+* **Automatic UI Refresh (CDC-driven)**: Both LWCs subscribe to Salesforce Change Data Capture (CDC) channels to refresh only when relevant fields are updated by the async Apex flows/triggers:
+    - Experience LWC subscribes to `/data/genesysps__Experience__ChangeEvent`
+    - VoiceCall LWC subscribes to `/data/VoiceCallChangeEvent`
+    - Refresh is triggered only if the change event pertains to the current `recordId` and the changed fields intersect with Copilot-related fields
+    - This avoids periodic polling and ensures the UI updates as soon as Copilot data arrives
+    - Prerequisite: Enable Change Data Capture for `genesysps__Experience__c` and `VoiceCall` in Setup → Change Data Capture
 
 * **Confidence Styling**: The JavaScript controller includes a `getConfidenceColor` function that calculates an RGB color based on a confidence value (0-1). This color is then used to dynamically style the borders of the text areas displaying summaries and wrap-up codes.
 
