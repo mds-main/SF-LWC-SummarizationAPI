@@ -110,8 +110,8 @@
 }
 
 .summary-textarea {
-    min-height: 10rem;
-    max-height: 10rem;
+    min-height: 8rem;
+    max-height: 8rem;
     overflow-y: auto;
 }
 
@@ -152,7 +152,7 @@
 .wrap-up-textarea {
     flex: 1;
     height: auto !important;
-    min-height: 80px !important;
+    min-height: 60px !important;
 }
 
 .wrap-up-box:hover::after {
@@ -234,7 +234,7 @@
 
 @media (max-width: 768px) {
     .wrap-up-textarea {
-        min-height: 60px !important;
+        min-height: 50px !important;
     }
 
     .wrap-up-box:hover::after {
