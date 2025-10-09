@@ -6,7 +6,7 @@ trigger ExperienceTrigger on genesysps__Experience__c (after insert, after updat
         for (genesysps__Experience__c exp : Trigger.new) {
             if (Trigger.isUpdate) {
                 genesysps__Experience__c oldExp = Trigger.oldMap.get(exp.Id);
-                if (String.isNotBlank(exp.genesysps__Ended__c) && String.isBlank(oldExp.genesysps__Ended__c)) {
+                if (exp.genesysps__Ended__c != null && oldExp.genesysps__Ended__c == null) {
                     GCFetchInteractionSummary.FlowInputs input = new GCFetchInteractionSummary.FlowInputs();
                     input.interactionId = exp.genesysps__Interaction_Id__c;
                     input.experienceId = exp.Id;
