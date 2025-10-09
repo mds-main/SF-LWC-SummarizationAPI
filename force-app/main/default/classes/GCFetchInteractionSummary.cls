@@ -117,6 +117,13 @@ public with sharing class GCFetchInteractionSummary {
                             throw new GCSummaryException('Summary generation not completed after ' + MAX_RETRIES + ' attempts');
                         }
                     }
+                } else if (response.getStatusCode() == 404 && isNotFoundError(response.getBody())) {
+                    // Retry for "No summaries found in DB for this hashkey" error
+                    retryCount++;
+                    System.debug(DEBUG_HEADER + 'No summaries found in DB, retrying... Attempt ' + retryCount + ' of ' + MAX_RETRIES);
+                    if (retryCount >= MAX_RETRIES) {
+                        throw new GCSummaryException('No summaries found in DB after ' + MAX_RETRIES + ' attempts');
+                    }
                 } else {
                     String errorMsg = 'Error calling Genesys Cloud API. Status: ' + response.getStatus() +
                         ', Status Code: ' + response.getStatusCode() + ', Body: ' + response.getBody();
@@ -162,6 +169,18 @@ public with sharing class GCFetchInteractionSummary {
             String errorMsg = 'Error checking summary completion: ' + e.getMessage() + '\n' + e.getStackTraceString();
             System.debug(LoggingLevel.ERROR, DEBUG_HEADER + errorMsg);
             throw new GCSummaryException(errorMsg);
+        }
+    }
+
+    private static Boolean isNotFoundError(String responseBody) {
+        System.debug(DEBUG_HEADER + 'Checking if this is a "No summaries found" error');
+        try {
+            Map<String, Object> responseMap = (Map<String, Object>)JSON.deserializeUntyped(responseBody);
+            String message = (String)responseMap.get('message');
+            return message != null && message.contains('No summaries found in DB for this hashkey');
+        } catch (Exception e) {
+            System.debug(DEBUG_HEADER + 'Error checking if this is a not found error: ' + e.getMessage());
+            return false;
         }
     }
 
