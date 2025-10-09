@@ -104,6 +104,7 @@ The solution consists of Lightning Web Components, Apex controllers, automation 
     - Experience LWC subscribes to `/data/genesysps__Experience__ChangeEvent`
     - VoiceCall LWC subscribes to `/data/VoiceCallChangeEvent`
     - Refresh is triggered only if the change event pertains to the current `recordId` and the changed fields intersect with Copilot-related fields
+    - The code reads `payload.ChangeEventHeader` when available (per CDC schema), with a fallback to `data.changeEventHeader` for compatibility
     - This avoids periodic polling and ensures the UI updates as soon as Copilot data arrives
     - Prerequisite: Enable Change Data Capture for `genesysps__Experience__c` and `VoiceCall` in Setup → Change Data Capture
 

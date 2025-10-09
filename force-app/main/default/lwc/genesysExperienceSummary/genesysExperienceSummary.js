@@ -114,7 +114,8 @@ export default class ExperienceCopilotSummary extends LightningElement {
 
     handleCdcMessage(message) {
         try {
-            const header = message?.data?.changeEventHeader;
+            const payload = message?.data?.payload;
+            const header = payload?.ChangeEventHeader || message?.data?.changeEventHeader;
             if (!header) {
                 return;
             }
@@ -122,12 +123,11 @@ export default class ExperienceCopilotSummary extends LightningElement {
             if (!recordIds.includes(this.recordId)) {
                 return;
             }
-            const changedFields = header.changedFields || [];
+            const changedFields = header.changedFields || payload?.changedFields || [];
             const relevant = changedFields.length === 0 || changedFields.some(f => this.relevantFields.has(f));
             if (relevant) {
                 console.log(`${DEBUG_HEADER} - Relevant CDC event received. Refreshing record.`);
                 refreshApex(this.experience);
-                // re-evaluate scrolls after refresh
                 setTimeout(() => this.updateScrollbarVisibility(), 200);
             }
         } catch (e) {

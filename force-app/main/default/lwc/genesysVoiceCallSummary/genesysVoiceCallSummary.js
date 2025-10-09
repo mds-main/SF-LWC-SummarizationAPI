@@ -114,7 +114,8 @@ export default class VoiceCallCopilotSummary extends LightningElement {
 
     handleCdcMessage(message) {
         try {
-            const header = message?.data?.changeEventHeader;
+            const payload = message?.data?.payload;
+            const header = payload?.ChangeEventHeader || message?.data?.changeEventHeader;
             if (!header) {
                 return;
             }
@@ -122,7 +123,7 @@ export default class VoiceCallCopilotSummary extends LightningElement {
             if (!recordIds.includes(this.recordId)) {
                 return;
             }
-            const changedFields = header.changedFields || [];
+            const changedFields = header.changedFields || payload?.changedFields || [];
             const relevant = changedFields.length === 0 || changedFields.some(f => this.relevantFields.has(f));
             if (relevant) {
                 console.log(`${DEBUG_HEADER} - Relevant CDC event received. Refreshing record.`);
