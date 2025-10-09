@@ -57,13 +57,12 @@ export default class ExperienceCopilotSummary extends LightningElement {
     }
 
     updateScrollbarVisibility() {
+        const threshold = 2; // px tolerance to avoid false positives due to rounding
         const textareas = this.template.querySelectorAll('.custom-textarea, .summary-textarea');
         textareas.forEach(textarea => {
-            if (textarea.scrollHeight > textarea.clientHeight) {
-                textarea.style.overflowY = 'auto';
-            } else {
-                textarea.style.overflowY = 'hidden';
-            }
+            const needsScroll = (textarea.scrollHeight - textarea.clientHeight) > threshold;
+            textarea.style.overflowY = needsScroll ? 'auto' : 'hidden';
+            textarea.style.overflowX = 'hidden';
         });
     }
 

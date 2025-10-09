@@ -105,7 +105,7 @@
     box-shadow: var(--input-shadow);
     transition: all 0.2s ease;
     width: 100%;
-    overflow: hidden; /* Initially hidden, JS will show when needed */
+    overflow: hidden; /* Hidden by default; JS toggles when overflow truly occurs */
 }
 
 .custom-textarea:hover {
@@ -157,7 +157,7 @@
     height: auto !important;
     min-height: 2.25rem !important; /* one-liner */
     max-height: 2.25rem !important;
-    overflow: hidden; /* Initially hidden, JS will show when needed */
+    overflow: hidden; /* Hidden by default; JS toggles when overflow truly occurs */
 }
 
 .wrap-up-box:hover::after {
