@@ -47,6 +47,24 @@ export default class ExperienceCopilotSummary extends LightningElement {
 
     connectedCallback() {
         console.log(`${DEBUG_HEADER} - Component initialized with recordId: ${this.recordId}`);
+        // Initialize scrollbar visibility after component renders
+        setTimeout(() => this.updateScrollbarVisibility(), 100);
+    }
+
+    renderedCallback() {
+        // Update scrollbar visibility when component re-renders
+        this.updateScrollbarVisibility();
+    }
+
+    updateScrollbarVisibility() {
+        const textareas = this.template.querySelectorAll('.custom-textarea, .summary-textarea');
+        textareas.forEach(textarea => {
+            if (textarea.scrollHeight > textarea.clientHeight) {
+                textarea.style.overflowY = 'auto';
+            } else {
+                textarea.style.overflowY = 'hidden';
+            }
+        });
     }
 
     @wire(getRecord, { recordId: '$recordId', fields: FIELDS })

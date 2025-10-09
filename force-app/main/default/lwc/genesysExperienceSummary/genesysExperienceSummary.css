@@ -105,7 +105,7 @@
     box-shadow: var(--input-shadow);
     transition: all 0.2s ease;
     width: 100%;
-    overflow-y: auto; /* mini-scroll only when needed */
+    overflow: hidden; /* Initially hidden, JS will show when needed */
 }
 
 .custom-textarea:hover {
@@ -115,7 +115,7 @@
 .summary-textarea {
     min-height: 8rem;
     max-height: 8rem;
-    overflow-y: auto;
+    overflow: hidden; /* Initially hidden, JS will show when needed */
 }
 
 .wrap-up-grid {
@@ -157,7 +157,7 @@
     height: auto !important;
     min-height: 2.25rem !important; /* one-liner */
     max-height: 2.25rem !important;
-    overflow-y: auto;
+    overflow: hidden; /* Initially hidden, JS will show when needed */
 }
 
 .wrap-up-box:hover::after {
