@@ -100,13 +100,6 @@ The solution consists of Lightning Web Components, Apex controllers, automation 
     - **Last Non-Empty Selection**: Always selects the last (most recent) non-empty session summary with participants, not the first one
 
 * **Data Retrieval**: Both LWCs use the `@wire` service with `getRecord` to fetch data from their respective objects (`genesysps__Experience__c` or `VoiceCall`). They retrieve various fields related to Copilot summaries, confidence scores, wrap-up codes, and interaction identifiers.
-* **Automatic UI Refresh (CDC-driven)**: Both LWCs subscribe to Salesforce Change Data Capture (CDC) channels to refresh only when relevant fields are updated by the async Apex flows/triggers:
-    - Experience LWC subscribes to `/data/genesysps__Experience__ChangeEvent`
-    - VoiceCall LWC subscribes to `/data/VoiceCallChangeEvent`
-    - Refresh is triggered only if the change event pertains to the current `recordId` and the changed fields intersect with Copilot-related fields
-    - The code reads `payload.ChangeEventHeader` when available (per CDC schema), with a fallback to `data.changeEventHeader` for compatibility
-    - This avoids periodic polling and ensures the UI updates as soon as Copilot data arrives
-    - Prerequisite: Enable Change Data Capture for `genesysps__Experience__c` and `VoiceCall` in Setup → Change Data Capture
 
 * **Confidence Styling**: The JavaScript controller includes a `getConfidenceColor` function that calculates an RGB color based on a confidence value (0-1). This color is then used to dynamically style the borders of the text areas displaying summaries and wrap-up codes.
 
@@ -231,22 +224,112 @@ private class ExperienceCopilotControllerTest {
 
 ## How to Use
 
-### For genesysps__Experience__c records:
-1.  Navigate to the Lightning App Builder for the `genesysps__Experience__c` record page.
-2.  Drag the `genesysExperienceSummary` LWC from the custom components panel onto the page layout.
-3.  The component will automatically use the `recordId` of the page it's placed on.
-4.  Save and activate the page.
+After completing the **Post-Deployment Configuration** steps below, the LWCs will automatically display Copilot data when records are created or updated with valid Genesys Cloud interaction IDs.
 
-### For VoiceCall records:
-1.  Navigate to the Lightning App Builder for the `VoiceCall` record page.
-2.  Drag the `genesysVoiceCallSummary` LWC from the custom components panel onto the page layout.
-3.  The component will automatically use the `recordId` of the page it's placed on.
-4.  Save and activate the page.
+### User Experience
 
-When viewing a record, the respective component will display the Copilot summary and wrap-up codes if the corresponding fields are populated on the record. Users can:
+When viewing a record with populated Copilot data, users can:
 
+- **View Copilot summaries and wrap-up codes** automatically populated by the async triggers
 - **Edit the summary text** directly in the component (auto-saves after 2 seconds of inactivity, shows "Summary update sent" toast)
-- **Click a wrap-up code** to apply it to the corresponding Genesys Cloud interaction
+- **Click wrap-up codes** to apply them to the corresponding Genesys Cloud interaction
+- **See real-time updates** via Change Data Capture (no manual refresh needed if CDC is enabled)
+
+**Note:** Refer to the **Post-Deployment Configuration** section for setup instructions.
+
+## Post-Deployment Configuration
+
+After successfully deploying the components via Salesforce CLI, administrators must complete the following configuration steps in the Salesforce org:
+
+### 1. Enable Change Data Capture (CDC)
+
+**Required for automatic UI refresh functionality.**
+
+1. Go to **Setup** → **Change Data Capture**
+2. Click **Add Objects**
+3. Select the following objects and enable them:
+   - `genesysps__Experience__c` (Custom Object)
+   - `VoiceCall` (Standard Object)
+4. Click **Save**
+
+**Why CDC is needed:** The LWCs subscribe to CDC events to automatically refresh when Copilot data is populated by the async triggers. Without CDC enabled, users must manually refresh the page to see updated data.
+
+### 2. Add LWCs to Record Pages
+
+**Required for users to access the Copilot summaries.**
+
+#### For genesysps__Experience__c Records:
+1. Go to **Setup** → **Lightning App Builder**
+2. Find and edit the `genesysps__Experience__c` record page layout
+3. Drag the `genesysExperienceSummary` component from the **Custom** components section onto the page
+4. Configure the component (it automatically uses the record ID)
+5. **Save** and **Activate** the page
+
+#### For VoiceCall Records:
+1. Go to **Setup** → **Lightning App Builder**
+2. Find and edit the `VoiceCall` record page layout
+3. Drag the `genesysVoiceCallSummary` component from the **Custom** components section onto the page
+4. Configure the component (it automatically uses the record ID)
+5. **Save** and **Activate** the page
+
+### 3. Configure Field-Level Security (FLS) - Experience Object Only
+
+**Required for users to access Copilot fields on Experience records.**
+
+⚠️ **VoiceCall objects do not support Field-Level Security** - no configuration needed for VoiceCall records.
+
+For `genesysps__Experience__c` records:
+
+1. Go to **Setup** → **Profiles** (or **Permission Sets** if using them)
+2. Select the profile(s) that will use the Experience LWC
+3. Go to **Field-Level Security** → **genesysps__Experience__c**
+4. Ensure **Read** access is enabled for the following fields:
+
+   | Field API Name | Field Label | Required Access |
+   |----------------|-------------|-----------------|
+   | `GC_Copilot_session_summary_id__c` | GC Copilot Session Summary ID | ✅ Read |
+   | `GC_Copilot_summary_text__c` | GC Copilot Summary Text | ✅ Read |
+   | `GC_Copilot_summary_confidence__c` | GC Copilot Summary Confidence | ✅ Read |
+   | `GC_Copilot_resolution_text__c` | GC Copilot Resolution Text | ✅ Read |
+   | `GC_Copilot_resolution_confidence__c` | GC Copilot Resolution Confidence | ✅ Read |
+   | `GC_Copilot_reason_text__c` | GC Copilot Reason Text | ✅ Read |
+   | `GC_Copilot_reason_confidence__c` | GC Copilot Reason Confidence | ✅ Read |
+   | `GC_Copilot_followup_text__c` | GC Copilot Follow-up Text | ✅ Read |
+   | `GC_Copilot_followup_confidence__c` | GC Copilot Follow-up Confidence | ✅ Read |
+   | `GC_Copilot_wrap_up_1_name__c` | GC Copilot Wrap-up 1 Name | ✅ Read |
+   | `GC_Copilot_wrap_up_1_confidence__c` | GC Copilot Wrap-up 1 Confidence | ✅ Read |
+   | `GC_Copilot_wrap_up_1_id__c` | GC Copilot Wrap-up 1 ID | ✅ Read |
+   | `GC_Copilot_wrap_up_2_name__c` | GC Copilot Wrap-up 2 Name | ✅ Read |
+   | `GC_Copilot_wrap_up_2_confidence__c` | GC Copilot Wrap-up 2 Confidence | ✅ Read |
+   | `GC_Copilot_wrap_up_2_id__c` | GC Copilot Wrap-up 2 ID | ✅ Read |
+   | `GC_Copilot_wrap_up_3_name__c` | GC Copilot Wrap-up 3 Name | ✅ Read |
+   | `GC_Copilot_wrap_up_3_confidence__c` | GC Copilot Wrap-up 3 Confidence | ✅ Read |
+   | `GC_Copilot_wrap_up_3_id__c` | GC Copilot Wrap-up 3 ID | ✅ Read |
+   | `GC_Copilot_participant_id__c` | GC Copilot Participant ID | ✅ Read |
+   | `GC_agent_participant_id__c` | GC Agent Participant ID | ✅ Read |
+   | `GC_Copilot_communication_id__c` | GC Copilot Communication ID | ✅ Read |
+   | `genesysps__Interaction_Id__c` | Interaction ID | ✅ Read |
+   | `genesysps__Ended__c` | Ended | ✅ Read |
+
+5. **Save** the profile changes
+
+**Note:** If using Permission Sets instead of Profiles, apply the same field access to the relevant Permission Sets.
+
+### 4. Verify Apex Class and Trigger Access
+
+Ensure the following have proper access for the user profiles:
+
+- ✅ **Apex Classes:** `ExperienceCopilotController`, `VoiceCallCopilotController`, `GCGetAgentParticipantId`, `GCFetchInteractionSummary`
+- ✅ **Apex Triggers:** `ExperienceTrigger`, `VoiceCallTrigger`
+
+### 5. Test the Integration
+
+1. Create a test `genesysps__Experience__c` record with a valid `genesysps__Interaction_Id__c`
+2. Wait for the trigger to populate Copilot data (may take a few minutes)
+3. Verify the Experience LWC shows the Copilot summary and wrap-up codes
+4. Test VoiceCall records similarly if applicable
+
+**Important:** If CDC is not enabled or field permissions are missing, users will need to manually refresh the page to see updated Copilot data.
 
 ## Key Files
 
