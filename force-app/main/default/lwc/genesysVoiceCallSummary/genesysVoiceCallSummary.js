@@ -1,5 +1,5 @@
 import { LightningElement, api, wire } from 'lwc';
-import { getRecord, getFieldValue, updateRecord } from 'lightning/uiRecordApi';
+import { getRecord, getFieldValue, updateRecord, refreshApex } from 'lightning/uiRecordApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import updateWrapUpCode from '@salesforce/apex/VoiceCallCopilotController.updateWrapUpCode';
 
@@ -38,17 +38,65 @@ export default class VoiceCallCopilotSummary extends LightningElement {
     editedSummary = '';
     isEditingSummary = false;
 
+    // Store wire reference for manual refresh
+    wiredVoiceCallResult;
+
     @wire(getRecord, { recordId: '$recordId', fields: FIELDS })
-    voiceCall;
+    wiredVoiceCall(result) {
+        this.wiredVoiceCallResult = result;
+        if (result.data) {
+            console.log(`${DEBUG_HEADER} - Record loaded successfully: ${this.recordId}`);
+            console.log(`${DEBUG_HEADER} - Wrap-up 1 ID: ${this.getWrapUpId(1)}`);
+            console.log(`${DEBUG_HEADER} - Wrap-up 2 ID: ${this.getWrapUpId(2)}`);
+            console.log(`${DEBUG_HEADER} - Wrap-up 3 ID: ${this.getWrapUpId(3)}`);
+        } else if (result.error) {
+            console.error(`${DEBUG_HEADER} - Error loading record:`, result.error);
+            this.showToast('Error', 'Failed to load record data', 'error');
+        }
+    }
 
     get getWrapUpBoxClass() {
         return `summary-box custom-summary-box wrap-up-box ${this.isProcessing ? 'processing' : ''}`;
+    }
+
+    // Method to manually refresh the wired data
+    async refreshData() {
+        console.log(`${DEBUG_HEADER} - Refreshing data for record: ${this.recordId}`);
+        try {
+            await refreshApex(this.wiredVoiceCallResult);
+            console.log(`${DEBUG_HEADER} - Data refresh completed`);
+        } catch (error) {
+            console.error(`${DEBUG_HEADER} - Error refreshing data:`, error);
+        }
     }
 
     connectedCallback() {
         console.log(`${DEBUG_HEADER} - Component initialized with recordId: ${this.recordId}`);
         // Initialize scrollbar visibility after component renders
         setTimeout(() => this.updateScrollbarVisibility(), 100);
+
+        // Set up periodic refresh to check for new data from async operations
+        this.startPeriodicRefresh();
+    }
+
+    // Start periodic refresh to catch async updates
+    startPeriodicRefresh() {
+        // Refresh after initial delay to catch async operations
+        setTimeout(() => {
+            this.refreshData();
+        }, 5000); // 5 seconds should be enough for async operations to complete
+
+        // Set up recurring refresh every 10 seconds to catch any missed updates
+        this.periodicRefreshInterval = setInterval(() => {
+            this.refreshData();
+        }, 10000);
+    }
+
+    disconnectedCallback() {
+        // Clean up interval when component is destroyed
+        if (this.periodicRefreshInterval) {
+            clearInterval(this.periodicRefreshInterval);
+        }
     }
 
     renderedCallback() {
