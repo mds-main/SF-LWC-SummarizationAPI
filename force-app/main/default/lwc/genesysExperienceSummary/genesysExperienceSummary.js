@@ -281,7 +281,7 @@ export default class ExperienceCopilotSummary extends LightningElement {
                 this.summaryAutoSaveTimer = null;
             }
 
-            this.showToast('Success', 'Summary saved successfully', 'success');
+            this.showToast('Success', 'Summary update sent', 'success');
 
         } catch (error) {
             console.error(`${DEBUG_HEADER} - Error saving summary:`, error);

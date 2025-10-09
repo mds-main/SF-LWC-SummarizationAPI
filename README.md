@@ -230,7 +230,7 @@ private class ExperienceCopilotControllerTest {
 
 When viewing a record, the respective component will display the Copilot summary and wrap-up codes if the corresponding fields are populated on the record. Users can:
 
-- **Edit the summary text** directly in the component (auto-saves after 2 seconds of inactivity)
+- **Edit the summary text** directly in the component (auto-saves after 2 seconds of inactivity, shows "Summary update sent" toast)
 - **Click a wrap-up code** to apply it to the corresponding Genesys Cloud interaction
 
 ## Key Files
