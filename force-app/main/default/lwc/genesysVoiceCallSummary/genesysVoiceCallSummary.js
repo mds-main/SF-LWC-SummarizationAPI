@@ -57,7 +57,7 @@ export default class VoiceCallCopilotSummary extends LightningElement {
     }
 
     updateScrollbarVisibility() {
-        const threshold = 2; // px tolerance to avoid false positives due to rounding
+        const threshold = 12; // px tolerance to avoid false positives due to rounding
         const textareas = this.template.querySelectorAll('.custom-textarea, .summary-textarea');
         textareas.forEach(textarea => {
             const needsScroll = (textarea.scrollHeight - textarea.clientHeight) > threshold;
