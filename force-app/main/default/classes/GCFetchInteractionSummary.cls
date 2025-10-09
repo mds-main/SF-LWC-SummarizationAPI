@@ -186,7 +186,20 @@ public with sharing class GCFetchInteractionSummary {
                 throw new GCSummaryException('No session summaries found in response');
             }
 
-            Map<String, Object> summary = (Map<String, Object>)sessionSummaries[0];
+            // Find the last non-empty session summary
+            Map<String, Object> summary = null;
+            for (Integer i = sessionSummaries.size() - 1; i >= 0; i--) {
+                Map<String, Object> currentSummary = (Map<String, Object>)sessionSummaries[i];
+                String text = (String)currentSummary.get('text');
+                if (String.isNotBlank(text)) {
+                    summary = currentSummary;
+                    break;
+                }
+            }
+
+            if (summary == null) {
+                throw new GCSummaryException('No non-empty session summaries found in response');
+            }
             Map<String, Object> fieldValues = new Map<String, Object>();
 
             fieldValues.put('GC_Copilot_session_summary_id__c', (String)summary.get('id'));

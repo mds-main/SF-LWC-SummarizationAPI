@@ -98,7 +98,12 @@ export default class ExperienceCopilotSummary extends LightningElement {
 
     getConfidenceColor(confidence) {
         console.log(`${DEBUG_HEADER} - Calculating confidence color for value: ${confidence}`);
-        if (!confidence) return '#e5e5e5';
+
+        // Use darkest green for confidence=1 or when confidence is not set
+        if (!confidence || confidence === 1) {
+            console.log(`${DEBUG_HEADER} - Using darkest green for confidence: ${confidence}`);
+            return 'rgb(0, 200, 0)';
+        }
 
         const confidenceValue = confidence * 100;
 
