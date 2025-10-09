@@ -15,7 +15,7 @@ Both components are designed to be placed on Salesforce record pages for their r
 ## Features
 
 * **Interaction Details Display**: Shows key information from Genesys Cloud Copilot:
-    * Interaction/Call Summary
+    * **Editable Interaction/Call Summary** (auto-saves after 2 seconds of inactivity)
     * Resolution
     * Reason
     * Follow-up Actions
@@ -228,7 +228,10 @@ private class ExperienceCopilotControllerTest {
 3.  The component will automatically use the `recordId` of the page it's placed on.
 4.  Save and activate the page.
 
-When viewing a record, the respective component will display the Copilot summary and wrap-up codes if the corresponding fields are populated on the record. Users can then click a wrap-up code to apply it.
+When viewing a record, the respective component will display the Copilot summary and wrap-up codes if the corresponding fields are populated on the record. Users can:
+
+- **Edit the summary text** directly in the component (auto-saves after 2 seconds of inactivity)
+- **Click a wrap-up code** to apply it to the corresponding Genesys Cloud interaction
 
 ## Key Files
 

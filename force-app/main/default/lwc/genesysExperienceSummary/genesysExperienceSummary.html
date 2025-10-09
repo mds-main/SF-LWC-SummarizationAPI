@@ -97,11 +97,14 @@
                         <div class="slds-form-element">
                             <label class="slds-form-element__label custom-label">Interaction Summary</label>
                             <div class="textarea-container">
-                                <textarea 
-                                    class="slds-textarea custom-textarea summary-textarea" 
-                                    readonly 
+                                <textarea
+                                    class="slds-textarea custom-textarea summary-textarea"
                                     style={summaryStyle}
-                                >{summary}</textarea>
+                                    value={summary}
+                                    oninput={handleSummaryInput}
+                                    onblur={handleSummaryBlur}
+                                    data-field="summary"
+                                ></textarea>
                             </div>
                         </div>
                     </div>

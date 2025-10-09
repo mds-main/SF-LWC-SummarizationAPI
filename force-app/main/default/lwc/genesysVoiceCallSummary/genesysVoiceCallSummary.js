@@ -1,5 +1,5 @@
 import { LightningElement, api, wire } from 'lwc';
-import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
+import { getRecord, getFieldValue, updateRecord } from 'lightning/uiRecordApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import updateWrapUpCode from '@salesforce/apex/VoiceCallCopilotController.updateWrapUpCode';
 
@@ -32,6 +32,11 @@ const FIELDS = [
 export default class VoiceCallCopilotSummary extends LightningElement {
     @api recordId;
     isProcessing = false;
+
+    // Auto-save properties
+    summaryAutoSaveTimer = null;
+    editedSummary = '';
+    isEditingSummary = false;
 
     @wire(getRecord, { recordId: '$recordId', fields: FIELDS })
     voiceCall;
@@ -81,6 +86,9 @@ export default class VoiceCallCopilotSummary extends LightningElement {
     }
 
     get summary() {
+        if (this.isEditingSummary) {
+            return this.editedSummary;
+        }
         return getFieldValue(this.voiceCall.data, 'VoiceCall.GC_Copilot_summary_text__c') || '';
     }
 
@@ -220,6 +228,72 @@ export default class VoiceCallCopilotSummary extends LightningElement {
         } finally {
             this.isProcessing = false;
             console.log(`${DEBUG_HEADER} - Update process completed`);
+        }
+    }
+
+    handleSummaryInput(event) {
+        this.isEditingSummary = true;
+        this.editedSummary = event.target.value;
+
+        // Clear existing timer
+        if (this.summaryAutoSaveTimer) {
+            clearTimeout(this.summaryAutoSaveTimer);
+        }
+
+        // Set new timer for auto-save after 2 seconds of inactivity
+        this.summaryAutoSaveTimer = setTimeout(() => {
+            this.saveSummary();
+        }, 2000);
+    }
+
+    handleSummaryBlur(event) {
+        // Save immediately when user leaves the field
+        if (this.isEditingSummary) {
+            this.saveSummary();
+        }
+    }
+
+    async saveSummary() {
+        if (!this.isEditingSummary || !this.recordId) {
+            return;
+        }
+
+        console.log(`${DEBUG_HEADER} - Auto-saving summary: ${this.editedSummary}`);
+
+        try {
+            const fields = {};
+            fields['GC_Copilot_summary_text__c'] = this.editedSummary;
+
+            const recordInput = {
+                fields: fields
+            };
+
+            // Update the record
+            await updateRecord(this.recordId, recordInput);
+
+            // Reset editing state
+            this.isEditingSummary = false;
+            this.editedSummary = '';
+
+            // Clear timer
+            if (this.summaryAutoSaveTimer) {
+                clearTimeout(this.summaryAutoSaveTimer);
+                this.summaryAutoSaveTimer = null;
+            }
+
+            this.showToast('Success', 'Summary saved successfully', 'success');
+
+        } catch (error) {
+            console.error(`${DEBUG_HEADER} - Error saving summary:`, error);
+            this.showToast('Error', 'Failed to save summary', 'error');
+
+            // Reset editing state on error
+            this.isEditingSummary = false;
+            this.editedSummary = '';
+            if (this.summaryAutoSaveTimer) {
+                clearTimeout(this.summaryAutoSaveTimer);
+                this.summaryAutoSaveTimer = null;
+            }
         }
     }
 

@@ -99,9 +99,12 @@
                             <div class="textarea-container">
                                 <textarea
                                     class="slds-textarea custom-textarea summary-textarea"
-                                    readonly
                                     style={summaryStyle}
-                                >{summary}</textarea>
+                                    value={summary}
+                                    oninput={handleSummaryInput}
+                                    onblur={handleSummaryBlur}
+                                    data-field="summary"
+                                ></textarea>
                             </div>
                         </div>
                     </div>
