@@ -262,6 +262,7 @@ export default class ExperienceCopilotSummary extends LightningElement {
 
         try {
             const fields = {};
+            fields['Id'] = this.recordId;
             fields['GC_Copilot_summary_text__c'] = this.editedSummary;
 
             const recordInput = {
@@ -269,7 +270,7 @@ export default class ExperienceCopilotSummary extends LightningElement {
             };
 
             // Update the record
-            await updateRecord(this.recordId, recordInput);
+            await updateRecord(recordInput);
 
             // Reset editing state
             this.isEditingSummary = false;
