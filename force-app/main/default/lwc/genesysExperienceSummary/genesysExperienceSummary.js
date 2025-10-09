@@ -34,6 +34,7 @@ const FIELDS = [
 export default class ExperienceCopilotSummary extends LightningElement {
     @api recordId;
     isProcessing = false;
+    isAlive = false;
 
     // Auto-save properties
     summaryAutoSaveTimer = null;
@@ -73,11 +74,14 @@ export default class ExperienceCopilotSummary extends LightningElement {
 
     connectedCallback() {
         console.log(`${DEBUG_HEADER} - Component initialized with recordId: ${this.recordId}`);
+        this.isAlive = true;
         // Initialize scrollbar visibility after component renders
         setTimeout(() => this.updateScrollbarVisibility(), 100);
         this.subscribeToCdc();
         onError(error => {
-            console.error(`${DEBUG_HEADER} - empApi error`, JSON.stringify(error));
+            if (this.isAlive) {
+                console.error(`${DEBUG_HEADER} - empApi error`, JSON.stringify(error));
+            }
         });
     }
 
@@ -87,7 +91,12 @@ export default class ExperienceCopilotSummary extends LightningElement {
     }
 
     disconnectedCallback() {
+        this.isAlive = false;
         this.unsubscribeFromCdc();
+        if (this.summaryAutoSaveTimer) {
+            clearTimeout(this.summaryAutoSaveTimer);
+            this.summaryAutoSaveTimer = null;
+        }
     }
 
     subscribeToCdc() {
@@ -114,6 +123,9 @@ export default class ExperienceCopilotSummary extends LightningElement {
 
     handleCdcMessage(message) {
         try {
+            if (!this.isAlive) {
+                return;
+            }
             const payload = message?.data?.payload;
             const header = payload?.ChangeEventHeader || message?.data?.changeEventHeader;
             if (!header) {
@@ -127,8 +139,11 @@ export default class ExperienceCopilotSummary extends LightningElement {
             const relevant = changedFields.length === 0 || changedFields.some(f => this.relevantFields.has(f));
             if (relevant) {
                 console.log(`${DEBUG_HEADER} - Relevant CDC event received. Refreshing record.`);
-                refreshApex(this.experience);
-                setTimeout(() => this.updateScrollbarVisibility(), 200);
+                refreshApex(this.experience).then(() => {
+                    if (this.isAlive) {
+                        setTimeout(() => this.updateScrollbarVisibility(), 200);
+                    }
+                });
             }
         } catch (e) {
             console.error(`${DEBUG_HEADER} - Error handling CDC message`, e);
@@ -136,6 +151,9 @@ export default class ExperienceCopilotSummary extends LightningElement {
     }
 
     updateScrollbarVisibility() {
+        if (!this.isAlive) {
+            return;
+        }
         const threshold = 12; // px tolerance to avoid false positives due to rounding
         const textareas = this.template.querySelectorAll('.custom-textarea, .summary-textarea');
         textareas.forEach(textarea => {
