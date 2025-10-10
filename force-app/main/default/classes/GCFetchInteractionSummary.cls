@@ -114,7 +114,8 @@ public with sharing class GCFetchInteractionSummary {
                         retryCount++;
                         System.debug(DEBUG_HEADER + 'Summary not yet completed. Attempt ' + retryCount + ' of ' + MAX_RETRIES);
                         if (retryCount >= MAX_RETRIES) {
-                            throw new GCSummaryException('Summary generation not completed after ' + MAX_RETRIES + ' attempts');
+                            System.debug(DEBUG_HEADER + 'Summary generation not completed after ' + MAX_RETRIES + ' attempts. Exiting without error.');
+                            return;
                         }
                     }
                 } else if (response.getStatusCode() == 404 && isNotFoundError(response.getBody())) {
@@ -122,7 +123,8 @@ public with sharing class GCFetchInteractionSummary {
                     retryCount++;
                     System.debug(DEBUG_HEADER + 'No summaries found in DB, retrying... Attempt ' + retryCount + ' of ' + MAX_RETRIES);
                     if (retryCount >= MAX_RETRIES) {
-                        throw new GCSummaryException('No summaries found in DB after ' + MAX_RETRIES + ' attempts');
+                        System.debug(DEBUG_HEADER + 'No summaries found in DB after ' + MAX_RETRIES + ' attempts. Exiting without error.');
+                        return;
                     }
                 } else {
                     String errorMsg = 'Error calling Genesys Cloud API. Status: ' + response.getStatus() +
@@ -139,6 +141,11 @@ public with sharing class GCFetchInteractionSummary {
         } catch (Exception e) {
             String errorMsg = 'Error in futureCallout: ' + e.getMessage() + '\n' + e.getStackTraceString();
             System.debug(LoggingLevel.ERROR, DEBUG_HEADER + errorMsg);
+            // Fail gracefully for not-found/empty-summary cases already handled above
+            if (e instanceof GCSummaryException && (e.getMessage()?.contains('No summaries found') || e.getMessage()?.contains('Summary generation not completed'))) {
+                System.debug(DEBUG_HEADER + 'Handled gracefully without raising platform error.');
+                return;
+            }
             throw new GCSummaryException(errorMsg);
         }
     }
