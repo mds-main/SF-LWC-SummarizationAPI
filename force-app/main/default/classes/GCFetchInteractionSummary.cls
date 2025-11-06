@@ -1,7 +1,7 @@
 public with sharing class GCFetchInteractionSummary {
     private static final String DEBUG_HEADER = '*** GCFetchInteractionSummary *** ';
-    private static final Integer MAX_RETRIES = 3;
-    private static final Integer DEFAULT_WAIT_TIME = 1;
+    private static final Integer MAX_RETRIES = 10;
+    private static final Integer DEFAULT_WAIT_TIME = 2;
 
     public class FlowInputs {
         @InvocableVariable(label='Interaction ID' description='The Genesys Cloud interaction ID' required=true)
@@ -348,5 +348,4 @@ public with sharing class GCFetchInteractionSummary {
         }
     }
 }
-
 

@@ -74,7 +74,7 @@ The solution consists of Lightning Web Components, Apex controllers, automation 
         - **`futureCallout` method**: Performs the HTTP GET request to `/api/v2/conversations/{id}/summaries` with retry logic and timing delays
         - **`processResponse` method**: Parses and maps the response data to Salesforce fields, ensuring only complete session summaries with participants are accepted
         - **`updateRecord` method**: Updates the relevant record(s) with the fetched Copilot data
-        - **Intelligent Retry Logic**: Implements configurable delays (1-second for Experience records, 2-seconds for VoiceCall records), handles 404 "No summaries found" errors with automatic retries, and validates session summaries have participants before accepting
+        - **Intelligent Retry Logic**: Uses configurable 2-second delays (default for both Experience and VoiceCall records), handles 404 "No summaries found" errors with automatic retries, and validates session summaries have participants before accepting
 
 5.  **Automation Triggers**:
     * **`ExperienceTrigger`**: Triggers data fetching for `genesysps__Experience__c` records
@@ -93,8 +93,8 @@ The solution consists of Lightning Web Components, Apex controllers, automation 
     - **GCFetchInteractionSummary**: Makes async callout to `/api/v2/conversations/{id}/summaries` to fetch Copilot data and map to Salesforce fields with intelligent retry logic and timing
 
 * **Intelligent Retry & Timing Logic**: The `GCFetchInteractionSummary` class implements sophisticated retry logic to ensure complete data retrieval:
-    - **Initial Delay**: 1-second wait before the first API call to allow Genesys Cloud time to fully populate session summaries (2 seconds for VoiceCall records)
-    - **Inter-Retry Delay**: 1-second wait between retry attempts (up to 3 total attempts) - 2 seconds for VoiceCall records
+    - **Initial Delay**: 2-second wait before the first API call to allow Genesys Cloud time to fully populate session summaries (2 seconds for VoiceCall records)
+    - **Inter-Retry Delay**: 2-second wait between retry attempts (up to 10 total attempts for both Experience and VoiceCall records)
     - **404 Error Handling**: Automatically retries when receiving "No summaries found in DB for this hashkey" errors
     - **Participants Validation**: Only accepts session summaries that include a non-empty `participants` array, ensuring we get the complete, latest interaction data
     - **Last Non-Empty Selection**: Always selects the last (most recent) non-empty session summary with participants, not the first one
@@ -194,7 +194,9 @@ Replace `<username>` with your Salesforce username or alias.
 
 ### Production Deployment Requirements
 
-**Important:** For production org deployment, you must create test classes for all Apex classes:
+**Important:** At present this repo only includes Apex tests for `ExperienceCopilotController` and `VoiceCallCopilotController`. If you plan to deploy to a production org, you must also build tests for `GCGetAgentParticipantId` and `GCFetchInteractionSummary` so every class that performs callouts has coverage.
+
+For production org deployment, you must create test classes for all Apex classes:
 
 - **`ExperienceCopilotController`**: Requires test class with minimum 75% code coverage
 - **`VoiceCallCopilotController`**: Requires test class with minimum 75% code coverage
